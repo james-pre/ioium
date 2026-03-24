@@ -2,8 +2,8 @@ import { exec } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { styleText } from 'node:util';
 import type * as z from 'zod';
-import * as io from './core.js';
-export * from './core.js';
+import * as io from '../core.js';
+export * from '../core.js';
 
 let _currentOperation: string | null = null,
 	_progress: [number, number] | null = null;
@@ -124,8 +124,7 @@ export function exit(message: unknown, code: number = 1): never {
 		code = message;
 		message = 'Unknown error!';
 	}
-	if (message instanceof Error) message = message.message;
-	io.error(message);
+	io.error(io.errorText(message));
 	process.exit(code);
 }
 
