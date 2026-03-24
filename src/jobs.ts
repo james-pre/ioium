@@ -43,7 +43,7 @@ export interface Context {
 	remaining: number;
 	failed: number;
 	finished: number;
-	prefix(i: number): string;
+	prefix(i: number, number?: number): string;
 }
 
 export interface JobContext {
@@ -70,8 +70,8 @@ export async function run(options: Options, jobs: Job[]): Promise<Results> {
 		remaining: jobs.length,
 		failed: 0,
 		finished: 0,
-		prefix(i: number) {
-			let prefix = `[${(i + 1).toString().padStart(totalWidth)}/${jobs.length}]`;
+		prefix(i: number, number: number = i + 1) {
+			let prefix = `[${number.toString().padStart(totalWidth)}/${jobs.length}]`;
 			if (typeof jobs[i] === 'object' && jobs[i].name) prefix += ' ' + jobs[i].name;
 			return prefix;
 		},
@@ -128,7 +128,7 @@ export async function run(options: Options, jobs: Job[]): Promise<Results> {
 
 		_clear();
 
-		io.log($.prefix($.finished++), formatJobResult(result));
+		io.log($.prefix(index, ++$.finished), formatJobResult(result));
 
 		const jobIdx = activeJobs.indexOf(job);
 		if (jobIdx === -1) throw new Error('BUG: Could not remove a job from the active jobs list');
