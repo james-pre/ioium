@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/only-throw-error */
+
 import { exec } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { styleText } from 'node:util';

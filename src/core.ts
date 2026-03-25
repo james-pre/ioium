@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/only-throw-error */
+
 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 // Shortcut to convert to 2-digit. Mostly used to make the line shorter.
