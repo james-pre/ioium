@@ -12,12 +12,7 @@ let _currentOperation: string | null = null,
 	_progress: [number, number] | null = null;
 
 function handleProgress(): Disposable {
-	if (!_currentOperation || !_progress)
-		return {
-			[Symbol.dispose]() {
-				if (!_progress) _currentOperation = null;
-			},
-		};
+	if (!_currentOperation) return { [Symbol.dispose]() {} };
 
 	process.stdout.clearLine(0);
 	process.stdout.cursorTo(0);
