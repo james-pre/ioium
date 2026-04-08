@@ -11,11 +11,16 @@ export * from '../core.js';
 let _currentOperation: string | null = null,
 	_progress: [number, number] | null = null;
 
+function clearLine() {
+	if (!process.stdout.isTTY) return;
+	process.stdout.clearLine(0);
+	process.stdout.cursorTo(0);
+}
+
 function handleProgress(): Disposable {
 	if (!_currentOperation) return { [Symbol.dispose]() {} };
 
-	process.stdout.clearLine(0);
-	process.stdout.cursorTo(0);
+	clearLine();
 
 	return {
 		[Symbol.dispose]() {
@@ -34,8 +39,7 @@ io.useProgress({
 	progress(value: number, max: number, message?: any): void {
 		_progress = [value, max];
 		value++;
-		process.stdout.clearLine(0);
-		process.stdout.cursorTo(0);
+		clearLine();
 		process.stdout.write(
 			`${_currentOperation}... ${value.toString().padStart(max.toString().length)}/${max} ${message && value < max ? `(${message})` : ''}`
 		);
