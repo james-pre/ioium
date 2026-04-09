@@ -112,6 +112,7 @@ export async function run(message: string, command: string): Promise<string> {
 		io.done();
 		return value;
 	} catch (error: any) {
+		io.done(true);
 		throw error == '[command]'
 			? stderr?.slice(0, 100) || 'failed.'
 			: typeof error == 'object' && 'message' in error
@@ -126,6 +127,7 @@ export function exit(message: unknown, code: number = 1): never {
 		code = message;
 		message = 'Unknown error!';
 	}
+	io.done(true);
 	io.error(io.errorText(message));
 	process.exit(code);
 }
