@@ -24,7 +24,13 @@ export function _setDebugOutput(enabled: boolean) {
 
 // I/O for "progressive" actions
 
-export let start: (message: string) => void;
+let _start: (message: string) => void;
+
+export function start(message: string): Disposable {
+	_start(message);
+	return { [Symbol.dispose]: () => done(true) };
+}
+
 export let progress: (value: number, max: number, message?: any) => void;
 export let done: (noPrint?: boolean) => void;
 
@@ -35,7 +41,7 @@ export interface ProgressIO {
 }
 
 export function useProgress(io: ProgressIO) {
-	start = io.start.bind(io);
+	_start = io.start.bind(io);
 	progress = io.progress.bind(io);
 	done = io.done.bind(io);
 }
