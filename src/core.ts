@@ -26,12 +26,12 @@ export function _setDebugOutput(enabled: boolean) {
 
 export let start: (message: string) => void;
 export let progress: (value: number, max: number, message?: any) => void;
-export let done: () => void;
+export let done: (noPrint?: boolean) => void;
 
 export interface ProgressIO {
 	start(message: string): void;
 	progress(value: number, max: number, message?: any): void;
-	done(): void;
+	done(noPrint?: boolean): void;
 }
 
 export function useProgress(io: ProgressIO) {

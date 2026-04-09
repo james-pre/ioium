@@ -49,10 +49,10 @@ io.useProgress({
 			console.log();
 		}
 	},
-	done(): void {
+	done(noPrint?: boolean): void {
 		_currentOperation = null;
 		_progress = null;
-		console.log('done.');
+		if (!noPrint) console.log('done.');
 	},
 });
 
