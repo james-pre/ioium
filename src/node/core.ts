@@ -97,7 +97,7 @@ export function setCommandTimeout(value: number) {
 /**
  * Run a system command with fancy I/O like "Example... done."
  */
-export async function run(message: string, command: string): Promise<string> {
+export async function runShell(message: string, command: string): Promise<string> {
 	let stderr: string | undefined;
 
 	try {
@@ -120,6 +120,13 @@ export async function run(message: string, command: string): Promise<string> {
 				: error;
 	}
 }
+
+export {
+	/**
+	 * @deprecated use {@link runShell}
+	 */
+	runShell as run,
+};
 
 /** Yet another convenience function */
 export function exit(message: unknown, code: number = 1): never {
