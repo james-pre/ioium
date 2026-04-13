@@ -36,12 +36,12 @@ io.useProgress({
 		process.stdout.write(message + '... ');
 	},
 	/** @todo implement additional messaging */
-	progress(value: number, max: number, message?: any): void {
+	progress(value: number, max: number, message?: any, valueText?: string): void {
 		_progress = [value, max];
 		value++;
 		clearLine();
 		process.stdout.write(
-			`${_currentOperation}... ${value.toString().padStart(max.toString().length)}/${max} ${message && value < max ? `(${message})` : ''}`
+			`${_currentOperation}... ${valueText || value.toString().padStart(max.toString().length)}/${max} ${message && value < max ? `(${message})` : ''}`
 		);
 		if (value >= max) {
 			_currentOperation = null;

@@ -31,12 +31,12 @@ export function start(message: string): Disposable {
 	return { [Symbol.dispose]: () => done(true) };
 }
 
-export let progress: (value: number, max: number, message?: any) => void;
+export let progress: (value: number, max: number, message?: any, valueText?: string) => void;
 export let done: (noPrint?: boolean) => void;
 
 export interface ProgressIO {
 	start(message: string): void;
-	progress(value: number, max: number, message?: any): void;
+	progress(value: number, max: number, message?: any, valueText?: string): void;
 	done(noPrint?: boolean): void;
 }
 
