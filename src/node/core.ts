@@ -38,7 +38,6 @@ io.useProgress({
 	/** @todo implement additional messaging */
 	progress(value: number, max: number, message?: any, valueText?: string): void {
 		_progress = [value, max];
-		value++;
 		clearLine();
 		process.stdout.write(
 			`${_currentOperation}... ${valueText || value.toString().padStart(max.toString().length)}/${max} ${message && value < max ? `(${message})` : ''}`
