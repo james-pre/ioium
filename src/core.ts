@@ -70,6 +70,15 @@ export function useOutput(output: ConsoleLike) {
 	error = output.error.bind(output);
 }
 
+const _warned = new Set();
+
+export function warnOnce(...args: any[]) {
+	const key = args.map(String).join(' ');
+	if (_warned.has(key)) return;
+	_warned.add(key);
+	warn(...args);
+}
+
 /**
  * This is a factory for handling errors when performing operations.
  * The handler will allow the parent scope to continue if certain errors occur,
