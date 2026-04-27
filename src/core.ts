@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 /* eslint-disable @typescript-eslint/only-throw-error */
 
-const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const _month = new Intl.DateTimeFormat(undefined, { month: 'short' });
 
 // Shortcut to convert to 2-digit. Mostly used to make the line shorter.
 const _2 = (v: number) => v.toString().padStart(2, '0');
@@ -10,7 +10,7 @@ const _2 = (v: number) => v.toString().padStart(2, '0');
  * Get a human-readable string for a date that also fits into CLIs well (fixed-width)
  */
 export function prettyDate(date: Date): string {
-	return `${date.getFullYear()} ${months[date.getMonth()]} ${_2(date.getDate())} ${_2(date.getHours())}:${_2(date.getMinutes())}:${_2(date.getSeconds())}.${date.getMilliseconds().toString().padStart(3, '0')}`;
+	return `${date.getFullYear()} ${_month.format(date)} ${_2(date.getDate())} ${_2(date.getHours())}:${_2(date.getMinutes())}:${_2(date.getSeconds())}.${date.getMilliseconds().toString().padStart(3, '0')}`;
 }
 
 export let _debugOutput = false;
