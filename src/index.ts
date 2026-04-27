@@ -2,3 +2,4 @@
 export * from './core.js';
 export * as jobs from './jobs.js';
 export * from './tracking.js';
+export * from './table.js';
