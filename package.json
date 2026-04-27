@@ -1,6 +1,6 @@
 {
 	"name": "ioium",
-	"version": "1.4.2",
+	"version": "1.4.3",
 	"description": "A library focused on making CLI output beautiful with minimal effort.",
 	"funding": {
 		"type": "individual",
