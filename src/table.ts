@@ -3,7 +3,7 @@ export interface TableColumn<T> {
 	size?: number;
 	text(row: T): unknown;
 	length?(row: T): number;
-	format?(text: string): string;
+	format?(text: string, row: T): string;
 	/** If set pad the start instead of the end */
 	padStart?: boolean;
 }
@@ -52,7 +52,7 @@ export function table<T>(columns: TableColumn<T>[], options: TableOptions = {}, 
 		for (const col of columns) {
 			const text = String(col.text(row));
 			let formatted = col.padStart ? text.padStart(col.size!) : text.padEnd(col.size!);
-			if (col.format) formatted = col.format(formatted);
+			if (col.format) formatted = col.format(formatted, row);
 			out.push(formatted);
 		}
 		console.log(...out);
