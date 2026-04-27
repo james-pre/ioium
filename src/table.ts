@@ -28,7 +28,7 @@ export function setTableTargetWidth(width: number) {
 /**
  * Output a table, or prepare to output a table
  */
-export function table<T>(columns: TableColumn<T>[], options: TableOptions, data: T[] = []): (row: T) => void {
+export function table<T>(columns: TableColumn<T>[], options: TableOptions = {}, data: T[] = []): (row: T) => void {
 	const nColumns = columns.length;
 
 	for (const col of columns) {
