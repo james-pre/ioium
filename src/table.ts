@@ -6,6 +6,8 @@ export interface TableColumn<T> {
 	format?(text: string, row: T): string;
 	/** If set pad the start instead of the end */
 	padStart?: boolean;
+	/** Growth factor when there is extra space */
+	grow?: number;
 }
 
 export interface TableOptions {
@@ -37,13 +39,13 @@ export function table<T>(columns: TableColumn<T>[], options: TableOptions = {}, 
 		col.size = max;
 	}
 
-	for (
-		let currentWidth = columns.reduce((sum, col) => sum + col.size!, nColumns - 1);
-		targetWidth && currentWidth < targetWidth;
-		currentWidth += Math.min(targetWidth - currentWidth, nColumns)
-	) {
-		for (let i = 0; i < nColumns; i++) {
-			if (currentWidth + i < targetWidth) columns[i].size!++;
+	let currentWidth = columns.reduce((sum, col) => sum + col.size!, nColumns - 1);
+
+	while (targetWidth && currentWidth < targetWidth) {
+		for (const col of columns) {
+			const extra = Math.max(0, Math.min(targetWidth - currentWidth, col.grow ?? 1));
+			col.size! += extra;
+			currentWidth += extra;
 		}
 	}
 
