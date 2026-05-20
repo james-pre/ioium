@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 /* eslint-disable @typescript-eslint/only-throw-error */
 
-import { exec } from 'node:child_process';
+import { exec, spawnSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { styleText } from 'node:util';
 import type * as z from 'zod';
@@ -94,6 +94,7 @@ export function setCommandTimeout(value: number) {
 
 /**
  * Run a system command with fancy I/O like "Example... done."
+ * @deprecated Use {@link trackCommand} instead, this function is unsafe.
  */
 export async function runShell(message: string, command: string): Promise<string> {
 	let stderr: string | undefined;
@@ -117,6 +118,29 @@ export async function runShell(message: string, command: string): Promise<string
 				? error.message
 				: error;
 	}
+}
+
+/**
+ * Run a system command with fancy I/O like "Example... done."
+ */
+export function trackCommand(message: string, command: string, ...args: string[]): string {
+	io.start(message);
+	const result = spawnSync(command, args, { encoding: 'utf-8', timeout });
+
+	if (result.error) {
+		io.done(true);
+		throw result.error;
+	}
+
+	const stderr = result.stderr.startsWith('ERROR:') ? result.stderr.slice(6).trim() : result.stderr.trim();
+
+	if (result.status !== 0) {
+		io.done(true);
+		throw stderr.slice(0, 100) || 'failed.';
+	}
+
+	io.done();
+	return result.stdout;
 }
 
 export {
