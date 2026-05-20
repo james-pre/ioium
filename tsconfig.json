@@ -13,7 +13,7 @@
 		"types": ["node"]
 	},
 	"typedocOptions": {
-		"entryPoints": ["src/index.ts"],
+		"entryPoints": ["src/index.ts", "src/node/index.ts"],
 		"out": "docs"
 	},
 	"include": ["./src/**/*.ts"],
