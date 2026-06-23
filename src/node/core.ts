@@ -120,11 +120,21 @@ export async function runShell(message: string, command: string): Promise<string
 	}
 }
 
+export interface TrackCommandOptions {
+	text: string;
+	/** Whether to ignore the command's exit code (or which codes to ignore) */
+	ignoreCode?: boolean | number[];
+}
+
 /**
  * Run a system command with fancy I/O like "Example... done."
  */
-export function trackCommand(message: string, command: string, ...args: string[]): string {
-	io.start(message);
+export function trackCommand(message: string, command: string, ...args: string[]): string;
+export function trackCommand(options: TrackCommandOptions, command: string, ...args: string[]): string;
+export function trackCommand(message: string | TrackCommandOptions, command: string, ...args: string[]): string {
+	const { text, ignoreCode } = typeof message === 'string' ? { text: message, ignoreCode: false } : message;
+
+	io.start(text);
 	const result = spawnSync(command, args, { encoding: 'utf-8', timeout });
 
 	if (result.error) {
@@ -134,7 +144,7 @@ export function trackCommand(message: string, command: string, ...args: string[]
 
 	const stderr = result.stderr.startsWith('ERROR:') ? result.stderr.slice(6).trim() : result.stderr.trim();
 
-	if (result.status !== 0) {
+	if (result.status && (!ignoreCode || (Array.isArray(ignoreCode) && !ignoreCode.includes(result.status)))) {
 		io.done(true);
 		throw stderr.slice(0, 100) || 'failed.';
 	}
