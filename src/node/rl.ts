@@ -7,12 +7,12 @@ const _rl = createInterface({
 	output: process.stdout,
 });
 
-_rl[Symbol.dispose] = () => process.stdin.unref();
+_rl[Symbol.dispose] = () => process.stdin.unref?.();
 
-process.stdin.unref();
+process.stdin.unref?.();
 
 export function getReadline(): Interface {
-	process.stdin.ref();
+	process.stdin.ref?.();
 	return _rl;
 }
 
