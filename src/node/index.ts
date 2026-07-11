@@ -13,3 +13,4 @@ if (process.stdout.isTTY) {
 }
 
 export * from '../table.js';
+export * from './rl.js';
