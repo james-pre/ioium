@@ -185,9 +185,5 @@ export function readJSON<S extends z.ZodType>(path: string, schema: S): z.infer<
 }
 
 export function writeJSON(path: string, data: any) {
-	writeFileSync(
-		path,
-		JSON.stringify(data, null, 4).replaceAll(/^( {4})+/g, match => '\t'.repeat(match.length / 4)),
-		'utf-8'
-	);
+	writeFileSync(path, JSON.stringify(data, null, '\t'), 'utf-8');
 }
