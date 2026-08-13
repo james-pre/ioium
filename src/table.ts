@@ -42,7 +42,9 @@ export function table<T>(columns: TableColumn<T>[], options: TableOptions = {}, 
 
 	let currentWidth = columns.reduce((sum, col) => sum + col.size!, nColumns - 1);
 
-	while (targetWidth && currentWidth < targetWidth) {
+	const canGrow = columns.some(col => !!(col.grow ?? 1));
+
+	while (canGrow && targetWidth && currentWidth < targetWidth) {
 		for (const col of columns) {
 			const extra = Math.max(0, Math.min(targetWidth - currentWidth, col.grow ?? 1));
 			col.size! += extra;
