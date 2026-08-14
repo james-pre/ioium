@@ -172,7 +172,6 @@ export function exit(message: unknown, code: number = 1): never {
 }
 
 /**
- *
  * @param defaultValue Returned when the file can't be loaded. If omitted, loading errors will be thrown.
  */
 export function readJSON<S extends z.ZodType>(path: string, schema: S): z.infer<S> {
