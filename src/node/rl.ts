@@ -1,6 +1,6 @@
 import { createInterface, type Interface } from 'node:readline/promises';
 import * as z from 'zod';
-import { exit } from './core.js';
+import { exit } from './process.js';
 
 const _rl = createInterface({
 	input: process.stdin,

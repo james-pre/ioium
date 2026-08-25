@@ -89,3 +89,16 @@ export function exit(message: unknown, code: number = 1): never {
 	io.error(io.errorText(message));
 	process.exit(code);
 }
+
+/** Use a different working directory for the rest of a block */
+export function withCWD(path: string): string & Disposable {
+	const original = process.cwd();
+
+	process.chdir(path);
+
+	return Object.assign(original, {
+		[Symbol.dispose]() {
+			process.chdir(original);
+		},
+	});
+}
