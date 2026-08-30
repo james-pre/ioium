@@ -4,6 +4,7 @@ export interface TableColumn<T> {
 	size?: number;
 	text(row: T): unknown;
 	length?(row: T): number;
+	/** @deprecated Include the formatting in `text` instead */
 	format?(text: string, row: T): string;
 	/** If set pad the start instead of the end */
 	padStart?: boolean;
@@ -29,6 +30,20 @@ export function setTableTargetWidth(width: number) {
 }
 
 /**
+ * Matches CSI/OSC sequences: an introducer (ESC or 8-bit CSI) followed by either
+ * an OSC-style payload terminated by BEL, or parameter bytes plus a final byte.
+ */
+const ansiRegex =
+	// eslint-disable-next-line no-control-regex
+	/[\u001B\u009B][[\]()#;?]*(?:(?:(?:(?:;[-a-zA-Z\d/#&.:=?%@~_]+)*|[a-zA-Z\d]+(?:;[-a-zA-Z\d/#&.:=?%@~_]*)*)?\u0007)|(?:(?:\d{1,4}(?:;\d{0,4})*)?[\dA-PR-TZcf-nq-uy=><~]))/g;
+
+let stripANSI = (text: string): string => text.replaceAll(ansiRegex, '');
+
+export function setANSIStripper(fn: (text: string) => string) {
+	stripANSI = fn;
+}
+
+/**
  * Output a table, or prepare to output a table
  */
 export function table<T>(columns: TableColumn<T>[], options: TableOptions = {}, data: T[] = []): (row: T) => void {
@@ -36,7 +51,8 @@ export function table<T>(columns: TableColumn<T>[], options: TableOptions = {}, 
 
 	for (const col of columns) {
 		let max = Math.max(col.size || 0, col.name?.length || 0);
-		for (const row of data) max = Math.max(max, col.length ? col.length(row) : String(col.text(row)).length);
+		for (const row of data)
+			max = Math.max(max, col.length ? col.length(row) : stripANSI(String(col.text(row))).length);
 		col.size = max;
 	}
 
@@ -56,7 +72,8 @@ export function table<T>(columns: TableColumn<T>[], options: TableOptions = {}, 
 		const out: string[] = [];
 		for (const col of columns) {
 			const text = String(col.text(row));
-			let formatted = col.padStart ? text.padStart(col.size!) : text.padEnd(col.size!);
+			const padding = ' '.repeat(Math.max(0, col.size! - stripANSI(text).length));
+			let formatted = col.padStart ? padding + text : text + padding;
 			if (col.format) formatted = col.format(formatted, row);
 			out.push(formatted);
 		}

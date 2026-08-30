@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 
-import { setTableTargetWidth } from '../table.js';
+import { stripVTControlCharacters } from 'node:util';
+import { setANSIStripper, setTableTargetWidth } from '../table.js';
+
+setANSIStripper(stripVTControlCharacters);
 
 if (process.stdout.isTTY) {
 	setTableTargetWidth(process.stdout.columns);
