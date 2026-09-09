@@ -54,15 +54,35 @@ export interface JobContext {
 type JobFn = (context: JobContext) => JobResult | Promise<JobResult>;
 export type Job = JobFn | { run: JobFn; name?: string };
 
+/**
+ * A position in a job list that enforces job ordering.
+ * Every job before it finishes before any job after it starts.
+ * It is not work of its own, so it is not counted or numbered.
+ */
+export const barrier = Symbol('ioium.jobs.barrier');
+
 interface JobInternal {
-	text: string;
+	message: string;
 	index: number;
 }
 
-export async function run(options: Options, jobs: Job[]): Promise<Results> {
+export async function run(options: Options, entries: (Job | typeof barrier)[]): Promise<Results> {
+	const jobs: Job[] = [];
+	const segments: number[] = [];
+
+	for (const entry of entries) {
+		if (entry !== barrier) {
+			jobs.push(entry);
+			continue;
+		}
+		if (jobs.length && segments.at(-1) !== jobs.length) segments.push(jobs.length);
+	}
+
 	if (!jobs.length) {
 		return { failed: 0, noJobs: true };
 	}
+
+	if (segments.at(-1) !== jobs.length) segments.push(jobs.length);
 
 	const totalWidth = jobs.length.toString().length;
 
@@ -83,7 +103,7 @@ export async function run(options: Options, jobs: Job[]): Promise<Results> {
 
 	function _draw() {
 		if (_noInPlaceUpdate) return;
-		drawActiveLines?.(activeJobs.map(j => j.text));
+		drawActiveLines?.(activeJobs.map((j, i) => `${$.prefix(j.index, $.finished + 1 + i)} ${j.message}`));
 		lastDrawLineCount = activeJobs.length;
 	}
 
@@ -93,24 +113,24 @@ export async function run(options: Options, jobs: Job[]): Promise<Results> {
 		lastDrawLineCount = 0;
 	}
 
-	async function nextJob(noInitialDraw: boolean = false) {
-		if ($.nextIndex >= jobs.length) return;
+	async function nextJob(limit: number, noInitialDraw: boolean = false) {
+		if ($.nextIndex >= limit) return;
 
 		const index = $.nextIndex++;
 
-		const job = { text: `${$.prefix(index)} ${options.jobStartText || 'starting...'}`, index };
+		const job: JobInternal = { message: options.jobStartText || 'starting...', index };
 
 		if (!_noInPlaceUpdate && !noInitialDraw) _clear();
 		activeJobs.push(job);
 
-		if (_noInPlaceUpdate) io.log(job.text);
+		if (_noInPlaceUpdate) io.log($.prefix(index, $.finished + activeJobs.length), job.message);
 		else if (!noInitialDraw) _draw();
 
 		function progress(...args: any[]) {
 			const line = args.join(' ').trim();
 			if (!line) return;
 
-			job.text = `${$.prefix(index)} ${line}`;
+			job.message = line;
 
 			_clear();
 			_draw();
@@ -138,35 +158,49 @@ export async function run(options: Options, jobs: Job[]): Promise<Results> {
 		_draw();
 		$.remaining--;
 
-		return await nextJob();
+		return await nextJob(limit);
 	}
 
-	const allDone: Promise<void>[] = [];
+	for (const end of segments) {
+		const allDone: Promise<void>[] = [];
 
-	for (let i = 0; i < options.concurrency; i++) {
-		if ($.nextIndex >= jobs.length) break;
+		for (let i = 0; i < options.concurrency; i++) {
+			if ($.nextIndex >= end) break;
 
-		allDone.push(nextJob(true));
+			allDone.push(nextJob(end, true));
+		}
+
+		_clear();
+		_draw();
+
+		await Promise.all(allDone);
 	}
 
-	_clear();
-	_draw();
-
-	await Promise.all(allDone);
 	return { failed: $.failed };
 }
 
 export interface OptionsWithData<T> extends Options {
 	run(data: T, progress: (...args: any[]) => void): JobResult | Promise<JobResult>;
 	name?(data: T): string | undefined;
+	group?(data: T): unknown;
 }
 
 export async function runWithData<T>(options: OptionsWithData<T>, data: T[]) {
-	return await run(
-		options,
-		data.map(d => ({
+	const entries: (Job | typeof barrier)[] = [];
+	let previous: unknown;
+
+	for (const [i, d] of data.entries()) {
+		if (options.group) {
+			const group = options.group(d);
+			if (i && !Object.is(group, previous)) entries.push(barrier);
+			previous = group;
+		}
+
+		entries.push({
 			run: (context: JobContext) => options.run(d, context.progress),
 			name: options.name?.(d),
-		}))
-	);
+		});
+	}
+
+	return await run(options, entries);
 }
