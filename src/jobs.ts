@@ -103,7 +103,7 @@ export async function run(options: Options, jobs: Job[]): Promise<Results> {
 		if (!_noInPlaceUpdate && !noInitialDraw) _clear();
 		activeJobs.push(job);
 
-		if (_noInPlaceUpdate) console.log(job.text);
+		if (_noInPlaceUpdate) io.log(job.text);
 		else if (!noInitialDraw) _draw();
 
 		function progress(...args: any[]) {
