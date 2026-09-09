@@ -149,6 +149,7 @@ export async function run(options: Options, jobs: Job[]): Promise<Results> {
 		allDone.push(nextJob(true));
 	}
 
+	_clear();
 	_draw();
 
 	await Promise.all(allDone);
