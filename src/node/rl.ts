@@ -1,21 +1,40 @@
-import { createInterface, type Interface } from 'node:readline/promises';
+import { createInterface, type Interface, type ReadLineOptions } from 'node:readline/promises';
 import * as z from 'zod';
 import { exit } from './process.js';
 
-const _rl = createInterface({
-	input: process.stdin,
-	output: process.stdout,
-});
+export interface SetReadlineOptions extends Omit<ReadLineOptions, 'input' | 'output'> {
+	/**
+	 * Whether to throw if the options can't be applied
+	 * @experimental A breaking change may occur during a non-major release
+	 */
+	$required?: boolean;
+}
 
-_rl[Symbol.dispose] = () => process.stdin.unref?.();
+let _rl: Interface, _rlOptions: SetReadlineOptions;
 
-process.stdin.unref?.();
+export function setReadlineOptions(options: SetReadlineOptions): boolean {
+	if (_rl) {
+		if (!options.$required) return false;
+		throw new Error('Can not io.setReadlineOptions after already creating a readline instance.');
+	}
+	_rlOptions = options;
+	return true;
+}
 
 /**
  * Get a readline reference. While held, this means process.stdin is ref'ed if it's a TTY.
  */
 export function getReadline(): Interface {
-	process.stdin.ref?.();
+	if (_rl) return _rl;
+
+	_rl = createInterface({
+		input: process.stdin,
+		output: process.stdout,
+		..._rlOptions,
+	});
+
+	_rl[Symbol.dispose] = () => process.stdin.unref?.();
+
 	return _rl;
 }
 
