@@ -36,7 +36,7 @@
 	"homepage": "https://github.com/james-pre/ioium#readme",
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
-		"@types/node": "^24.7.0",
+		"@types/node": "^26",
 		"eslint": "^10.1.0",
 		"globals": "^17.4.0",
 		"prettier": "^3.2.5",
