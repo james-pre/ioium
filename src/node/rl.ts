@@ -2,7 +2,7 @@ import { createInterface, type Interface, type ReadLineOptions } from 'node:read
 import * as z from 'zod';
 import { exit } from './process.js';
 
-export interface SetReadlineOptions extends Omit<ReadLineOptions, 'input' | 'output'> {
+export interface SetReadlineOptions extends Omit<ReadLineOptions, 'input'> {
 	/**
 	 * Whether to throw if the options can't be applied
 	 * @experimental A breaking change may occur during a non-major release
