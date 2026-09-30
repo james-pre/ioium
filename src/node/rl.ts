@@ -10,7 +10,9 @@ export interface SetReadlineOptions extends Omit<ReadLineOptions, 'input'> {
 	$required?: boolean;
 }
 
-let _rl: Interface, _rlOptions: SetReadlineOptions;
+let _rl: Interface,
+	_rlOptions: SetReadlineOptions,
+	_rlHolders = 0;
 
 export function setReadlineOptions(options: SetReadlineOptions): boolean {
 	if (_rl) {
@@ -25,6 +27,9 @@ export function setReadlineOptions(options: SetReadlineOptions): boolean {
  * Get a readline reference. While held, this means process.stdin is ref'ed if it's a TTY.
  */
 export function getReadline(): Interface {
+	_rlHolders++;
+	process.stdin.ref?.();
+
 	if (_rl) return _rl;
 
 	_rl = createInterface({
@@ -33,7 +38,10 @@ export function getReadline(): Interface {
 		..._rlOptions,
 	});
 
-	_rl[Symbol.dispose] = () => process.stdin.unref?.();
+	_rl[Symbol.dispose] = () => {
+		_rlHolders = Math.max(0, _rlHolders - 1);
+		if (!_rlHolders) process.stdin.unref?.();
+	};
 
 	return _rl;
 }
