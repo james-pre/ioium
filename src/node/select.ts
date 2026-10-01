@@ -2,7 +2,7 @@
 
 import { clearScreenDown, cursorTo, emitKeypressEvents, moveCursor, type Key } from 'node:readline';
 import { styleText } from 'node:util';
-import { closeReadline, getReadline } from './rl.js';
+import { ask, closeReadline } from './rl.js';
 
 export interface Choice<T> {
 	name: string;
@@ -184,7 +184,7 @@ function interactive<T>(
 }
 
 /**
- * Pick choices by typing their numbers or names.
+ * Pick choices by typing their numbers or names, which can be partial when only one choice matches.
  * @returns Indices of the picked choices
  */
 async function fallback<T>(
@@ -193,15 +193,13 @@ async function fallback<T>(
 	multi: boolean,
 	initial: number[]
 ): Promise<number[]> {
-	using rl = getReadline();
-
 	for (const [i, choice] of choices.entries()) console.log(`  ${i + 1}) ${choice.name}`);
 
 	const hint = multi ? 'numbers or names, separated by commas' : 'number or name';
 	const defaults = initial.length ? `, default ${initial.map(i => i + 1).join(',')}` : '';
 
 	for (;;) {
-		const answer = (await rl.question(`${question} [${hint}${defaults}]: `)).trim();
+		const answer = (await ask(`${question} [${hint}${defaults}]: `)).trim();
 		if (!answer) {
 			if (initial.length || multi) return initial;
 			continue;
@@ -211,7 +209,12 @@ async function fallback<T>(
 		const indices = parts.map(part => {
 			const n = Number(part);
 			if (Number.isInteger(n) && n >= 1 && n <= choices.length) return n - 1;
-			return choices.findIndex(choice => choice.name.toLowerCase() == part.toLowerCase());
+			const exact = choices.findIndex(choice => choice.name.toLowerCase() == part.toLowerCase());
+			if (exact != -1) return exact;
+			const partial = choices.flatMap((choice, i) =>
+				choice.name.toLowerCase().includes(part.toLowerCase()) ? [i] : []
+			);
+			return partial.length == 1 ? partial[0] : -1;
 		});
 
 		if (!indices.includes(-1)) return [...new Set(indices)];
