@@ -10,7 +10,7 @@ export interface SetReadlineOptions extends Omit<ReadLineOptions, 'input'> {
 	$required?: boolean;
 }
 
-let _rl: Interface,
+let _rl: Interface | null,
 	_rlOptions: SetReadlineOptions,
 	_rlHolders = 0;
 
@@ -25,6 +25,8 @@ export function setReadlineOptions(options: SetReadlineOptions): boolean {
 
 /**
  * Get a readline reference. While held, this means process.stdin is ref'ed if it's a TTY.
+ * A new instance is created when the previous one was closed.
+ * Ctrl+C closes it and sends SIGINT to the process.
  */
 export function getReadline(): Interface {
 	_rlHolders++;
@@ -32,18 +34,37 @@ export function getReadline(): Interface {
 
 	if (_rl) return _rl;
 
-	_rl = createInterface({
+	const rl = createInterface({
 		input: process.stdin,
 		output: process.stdout,
 		..._rlOptions,
 	});
 
-	_rl[Symbol.dispose] = () => {
+	rl[Symbol.dispose] = () => {
 		_rlHolders = Math.max(0, _rlHolders - 1);
 		if (!_rlHolders) process.stdin.unref?.();
 	};
 
-	return _rl;
+	rl.once('close', () => {
+		if (_rl === rl) _rl = null;
+	});
+
+	rl.on('SIGINT', () => {
+		rl.close();
+		process.stdout.write('\n');
+		process.kill(process.pid, 'SIGINT');
+	});
+
+	_rl = rl;
+	return rl;
+}
+
+/**
+ * Close the readline instance, if any, so something else can read from stdin directly.
+ * @internal
+ */
+export function closeReadline() {
+	_rl?.close();
 }
 
 /**

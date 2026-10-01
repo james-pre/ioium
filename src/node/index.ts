@@ -18,3 +18,4 @@ export * from './core.js';
 export * as jobs from './jobs.js';
 export * from './process.js';
 export * from './rl.js';
+export * from './select.js';
