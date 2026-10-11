@@ -1,5 +1,7 @@
+import { clearScreenDown, cursorTo, moveCursor } from 'node:readline';
 import { createInterface, type Interface, type ReadLineOptions } from 'node:readline/promises';
 import * as z from 'zod';
+import { _setActivePrompt } from './core.js';
 import { exit } from './process.js';
 
 export interface SetReadlineOptions extends Omit<ReadLineOptions, 'input'> {
@@ -90,11 +92,22 @@ export async function ask(question: string): Promise<string> {
 	const controller = new AbortController();
 	const onClose = () => controller.abort(new Error('No more input'));
 	rl.once('close', onClose);
+	_setActivePrompt({
+		clear() {
+			moveCursor(process.stdout, 0, -rl.getCursorPos().rows);
+			cursorTo(process.stdout, 0);
+			clearScreenDown(process.stdout);
+		},
+		redraw() {
+			rl.prompt(true);
+		},
+	});
 	try {
 		return await rl.question(question, { signal: controller.signal });
 	} catch (e) {
 		throw controller.signal.aborted ? controller.signal.reason : e;
 	} finally {
+		_setActivePrompt(null);
 		rl.off('close', onClose);
 	}
 }

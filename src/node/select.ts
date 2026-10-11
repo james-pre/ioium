@@ -2,6 +2,7 @@
 
 import { clearScreenDown, cursorTo, emitKeypressEvents, moveCursor, type Key } from 'node:readline';
 import { styleText } from 'node:util';
+import { _setActivePrompt } from './core.js';
 import { ask, closeReadline } from './rl.js';
 
 export interface Choice<T> {
@@ -103,6 +104,7 @@ function interactive<T>(
 	}
 
 	function cleanup() {
+		_setActivePrompt(null);
 		stdin.off('keypress', onKeypress);
 		clear();
 		stdout.write('\x1b[?25h');
@@ -179,6 +181,13 @@ function interactive<T>(
 
 	stdin.on('keypress', onKeypress);
 	render();
+	_setActivePrompt({
+		clear() {
+			clear();
+			lines = 0;
+		},
+		redraw: render,
+	});
 
 	return promise;
 }

@@ -16,6 +16,22 @@ function clearLine() {
 	process.stdout.cursorTo(0);
 }
 
+/** A prompt shown at the bottom of the terminal, which output is written above */
+export interface ActivePrompt {
+	clear(): void;
+	redraw(): void;
+}
+
+let _activePrompt: ActivePrompt | null = null;
+
+/**
+ * Set the prompt being shown, so output is written above it instead of through it.
+ * @internal
+ */
+export function _setActivePrompt(prompt: ActivePrompt | null) {
+	_activePrompt = prompt;
+}
+
 function handleProgress(): Disposable {
 	if (!_currentOperation) return { [Symbol.dispose]() {} };
 
@@ -25,6 +41,19 @@ function handleProgress(): Disposable {
 		[Symbol.dispose]() {
 			process.stdout.write(_currentOperation + '... ');
 			if (_progress) io.progress(..._progress);
+		},
+	};
+}
+
+/** Clear the active prompt and any progress line, restoring them once disposed */
+function handleOutput(): Disposable {
+	const prompt = process.stdout.isTTY ? _activePrompt : null;
+	prompt?.clear();
+	const progress = handleProgress();
+	return {
+		[Symbol.dispose]() {
+			progress[Symbol.dispose]();
+			prompt?.redraw();
 		},
 	};
 }
@@ -63,24 +92,24 @@ function* maybeStyle(style: Parameters<typeof styleText>[0], parts: any[]): Gene
 
 io.useOutput({
 	error(...message: string[]): void {
-		using _ = handleProgress();
+		using _ = handleOutput();
 		console.error(...maybeStyle('red', message));
 	},
 	warn(...message: string[]): void {
-		using _ = handleProgress();
+		using _ = handleOutput();
 		console.warn(...maybeStyle('yellow', message));
 	},
 	info(...message: string[]): void {
-		using _ = handleProgress();
+		using _ = handleOutput();
 		console.info(...maybeStyle('blue', message));
 	},
 	log(...message: string[]): void {
-		using _ = handleProgress();
+		using _ = handleOutput();
 		console.log(...message);
 	},
 	debug(...message: string[]): void {
 		if (!io._debugOutput) return;
-		using _ = handleProgress();
+		using _ = handleOutput();
 		console.debug(...maybeStyle('gray', message));
 	},
 });
