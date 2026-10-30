@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 
 import { clearScreenDown, cursorTo, emitKeypressEvents, moveCursor, type Key } from 'node:readline';
-import { styleText } from 'node:util';
+import { stripVTControlCharacters, styleText } from 'node:util';
 import { _setActivePrompt } from './core.js';
 import { ask, closeReadline } from './rl.js';
 
@@ -60,14 +60,15 @@ function interactive<T>(
 	let cursor = multi ? 0 : (initial[0] ?? 0),
 		offset = 0,
 		filter = '',
-		lines = 0;
+		/** Terminal rows the prompt takes up, counting wrapped lines */
+		rows = 0;
 
 	const visible = () =>
 		choices.flatMap((choice, i) => (choice.name.toLowerCase().includes(filter.toLowerCase()) ? [i] : []));
 
 	function clear() {
-		if (!lines) return;
-		moveCursor(stdout, 0, -(lines - 1));
+		if (!rows) return;
+		moveCursor(stdout, 0, -(rows - 1));
 		cursorTo(stdout, 0);
 		clearScreenDown(stdout);
 	}
@@ -100,7 +101,11 @@ function interactive<T>(
 
 		clear();
 		stdout.write(out.join('\n'));
-		lines = out.length;
+		const columns = stdout.columns || 80;
+		rows = out.reduce(
+			(total, line) => total + Math.max(1, Math.ceil([...stripVTControlCharacters(line)].length / columns)),
+			0
+		);
 	}
 
 	function cleanup() {
@@ -184,7 +189,7 @@ function interactive<T>(
 	_setActivePrompt({
 		clear() {
 			clear();
-			lines = 0;
+			rows = 0;
 		},
 		redraw: render,
 	});
