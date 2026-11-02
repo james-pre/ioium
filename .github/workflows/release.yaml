@@ -68,4 +68,4 @@ jobs:
               run: npx tsc
 
             - name: Publish
-              run: npm publish --access=public --provenance
+              run: npm publish --access=public --provenance ${{ github.event.release.prerelease && '--tag next' || '' }}
