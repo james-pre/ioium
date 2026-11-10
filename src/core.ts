@@ -24,15 +24,26 @@ export function _setDebugOutput(enabled: boolean) {
 
 // I/O for "progressive" actions
 
-let _start: (message: string) => void;
+let _start: (message: string) => void = message => console.log(message + '...');
 
 export function start(message: string): Disposable {
 	_start(message);
 	return { [Symbol.dispose]: () => done(true) };
 }
 
-export let progress: (value: number, max: number, message?: any, valueText?: string) => void;
-export let done: (noPrint?: boolean) => void;
+export let progress: (value: number, max: number, message?: any, valueText?: string) => void = (
+	value,
+	max,
+	message,
+	valueText
+) => {
+	console.log(
+		`${valueText || value.toString().padStart(max.toString().length) + '/' + max} ${message && value < max ? `(${message})` : ''}`
+	);
+};
+export let done: (noPrint?: boolean) => void = noPrint => {
+	if (!noPrint) console.log('done.');
+};
 
 export interface ProgressIO {
 	start(message: string): void;
