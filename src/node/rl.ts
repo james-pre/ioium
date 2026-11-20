@@ -73,17 +73,12 @@ export function closeReadline() {
 	_rl?.close();
 }
 
-/**
- * Ask a question and wait for a line of input.
- * Lines that arrived before they were asked for, like piped input, answer questions first.
- * Rejects when the input ends first.
- */
-export async function ask(question: string): Promise<string> {
+async function _ask(question: string, hidden: boolean): Promise<string> {
 	using rl = getReadline();
 
 	const buffered = _lines.shift();
 	if (buffered !== undefined) {
-		process.stdout.write(question + buffered + '\n');
+		process.stdout.write(question + (hidden ? '' : buffered) + '\n');
 		return buffered;
 	}
 
@@ -109,6 +104,73 @@ export async function ask(question: string): Promise<string> {
 	} finally {
 		_setActivePrompt(null);
 		rl.off('close', onClose);
+	}
+}
+
+/**
+ * Ask a question and wait for a line of input.
+ * Lines that arrived before they were asked for, like piped input, answer questions first.
+ * Rejects when the input ends first.
+ */
+export async function ask(question: string): Promise<string> {
+	return await _ask(question, false);
+}
+
+/**
+ * Ask a question without showing the answer as it is typed, e.g. for passwords.
+ * Otherwise behaves like {@link ask}.
+ */
+export async function askHidden(question: string): Promise<string> {
+	if (!process.stdin.isTTY) return await _ask(question, true);
+
+	const buffered = _lines.shift();
+	if (buffered !== undefined) {
+		process.stdout.write(question + '\n');
+		return buffered;
+	}
+
+	if (process.stdin.readableEnded) throw new Error('No more input');
+
+	closeReadline();
+	process.stdout.write(question);
+	process.stdin.setRawMode(true);
+	process.stdin.resume();
+
+	const { promise, resolve, reject } = Promise.withResolvers<string>();
+	let answer = '',
+		interrupted = false;
+
+	function onData(chunk: Buffer) {
+		for (const char of chunk.toString('utf8')) {
+			switch (char) {
+				case '\r':
+				case '\n':
+					return resolve(answer);
+				case '\u0003':
+					interrupted = true;
+					return reject(new Error('Interrupted'));
+				case '\u0004':
+					if (!answer) return reject(new Error('No more input'));
+					break;
+				case '\u007f':
+				case '\b':
+					answer = answer.slice(0, -1);
+					break;
+				default:
+					answer += char;
+			}
+		}
+	}
+
+	process.stdin.on('data', onData);
+	try {
+		return await promise;
+	} finally {
+		process.stdin.off('data', onData);
+		process.stdin.setRawMode(false);
+		process.stdin.pause();
+		process.stdout.write('\n');
+		if (interrupted) process.kill(process.pid, 'SIGINT');
 	}
 }
 
